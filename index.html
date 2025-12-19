@@ -1,139 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CMT Level 1 – Interactive Study Tracker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    .controls {
-      background: #ffffff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    label {
-      font-weight: bold;
-    }
-    input {
-      margin: 5px 10px 5px 0;
-      padding: 5px;
-    }
-    .week {
-      background: #ffffff;
-      margin-bottom: 12px;
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-    .week.completed {
-      background: #d4edda;
-    }
-    .progress {
-      margin-top: 20px;
-      background: #ffffff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMT Level 1 – Smart Study Tracker</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  padding:20px;
+  max-width:1000px;
+  margin:auto;
+}
+
+h1,h2 { text-align:center; }
+
+.progress-box, .week {
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+  height:20px;
+  background:#ddd;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.progress-fill {
+  height:100%;
+  width:0%;
+  background:#4CAF50;
+  transition:width 0.4s;
+}
+
+.week.completed {
+  background:#d4edda;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th, td {
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
+  font-size:14px;
+}
+
+th { background:#f0f0f0; }
+</style>
 </head>
+
 <body>
 
-<h1>CMT Level 1 – Study Planner</h1>
-<h2>8 Hours Per Week Interactive Tracker</h2>
+<h1>CMT Level 1 – Interactive Study Tracker</h1>
+<h2>8 Hours / Week</h2>
 
-<div class="controls">
-  <label>Start Date:</label>
-  <input type="date" id="startDate" />
-  <button onclick="calculateDates()">Calculate Schedule</button>
-  <p id="endDate"></p>
-  <p id="timeRemaining"></p>
+<div class="progress-box">
+  <strong>Overall Progress</strong>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <p id="progressText">0% completed</p>
+  <p id="timeStats"></p>
 </div>
 
 <div id="weeks"></div>
 
-<div class="progress">
-  <h3>Progress</h3>
-  <p id="progressText">0 / 12 weeks completed</p>
-</div>
-
 <script>
-  const studyPlan = [
-    "Intro to Technical Analysis + Philosophy",
-    "Market Data, Charts (Line, Bar, Candlestick)",
-    "Trend Analysis & Support/Resistance",
-    "Chart Patterns (Reversal & Continuation)",
-    "Moving Averages & Momentum Indicators",
-    "Oscillators (RSI, MACD, Stochastic)",
-    "Market Breadth & Sentiment Indicators",
-    "Volatility, Cycles & Confirmation",
-    "System Testing & Statistics Basics",
-    "Ethics & Professional Conduct",
-    "Full Revision + Weak Areas",
-    "Mock Exams & Final Review"
-  ];
+const topics = [
+ "Intro & Philosophy of Technical Analysis",
+ "Market Data & Chart Types",
+ "Trend Analysis & Support/Resistance",
+ "Chart Patterns",
+ "Moving Averages",
+ "Momentum Indicators",
+ "Oscillators (RSI, MACD)",
+ "Market Breadth & Sentiment",
+ "Volatility & Cycles",
+ "System Testing Basics",
+ "Ethics",
+ "Revision & Mock Exams"
+];
 
-  const weeksDiv = document.getElementById("weeks");
+let data = JSON.parse(localStorage.getItem("cmtTracker")) || {};
 
-  studyPlan.forEach((topic, index) => {
-    const div = document.createElement("div");
-    div.className = "week";
-    div.innerHTML = `
-      <input type="checkbox" onchange="toggleComplete(this, ${index})" />
-      <strong>Week ${index + 1}:</strong> ${topic} (8 hrs)
-      <p id="date-${index}"></p>
-    `;
-    weeksDiv.appendChild(div);
+const weeksDiv = document.getElementById("weeks");
+
+topics.forEach((topic, i) => {
+  const w = document.createElement("div");
+  w.className = "week";
+  w.innerHTML = `
+    <input type="checkbox" id="chk${i}">
+    <strong>Week ${i+1}:</strong> ${topic}
+    <table>
+      <tr>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Days Taken</th>
+      </tr>
+      <tr>
+        <td id="start${i}">-</td>
+        <td id="end${i}">-</td>
+        <td id="days${i}">-</td>
+      </tr>
+    </table>
+  `;
+  weeksDiv.appendChild(w);
+
+  const checkbox = w.querySelector("input");
+
+  if (data[i]?.completed) {
+    checkbox.checked = true;
+    w.classList.add("completed");
+  }
+
+  checkbox.addEventListener("change", () => toggleWeek(i, checkbox, w));
+});
+
+function toggleWeek(i, checkbox, w) {
+  if (!data[i]) data[i] = {};
+
+  if (checkbox.checked) {
+    data[i].completed = true;
+    data[i].end = new Date().toISOString();
+    if (!data[i].start) data[i].start = new Date().toISOString();
+    w.classList.add("completed");
+  } else {
+    data[i].completed = false;
+    w.classList.remove("completed");
+  }
+
+  localStorage.setItem("cmtTracker", JSON.stringify(data));
+  render();
+}
+
+function render() {
+  let completed = 0;
+  let totalDays = 0;
+
+  topics.forEach((_, i) => {
+    if (!data[i]) return;
+
+    const start = data[i].start ? new Date(data[i].start) : null;
+    const end = data[i].end ? new Date(data[i].end) : null;
+
+    document.getElementById(`start${i}`).innerText = start ? start.toDateString() : "-";
+    document.getElementById(`end${i}`).innerText = end ? end.toDateString() : "-";
+
+    if (start && end) {
+      const days = Math.ceil((end - start)/(1000*60*60*24));
+      document.getElementById(`days${i}`).innerText = days;
+      totalDays += days;
+    }
+
+    if (data[i].completed) completed++;
   });
 
-  function toggleComplete(checkbox, index) {
-    const weekDiv = checkbox.parentElement;
-    weekDiv.classList.toggle("completed", checkbox.checked);
-    updateProgress();
-  }
+  const percent = Math.round((completed / topics.length) * 100);
+  document.getElementById("progressFill").style.width = percent + "%";
+  document.getElementById("progressText").innerText = `${percent}% completed`;
+  document.getElementById("timeStats").innerText =
+    `Topics completed: ${completed}/${topics.length} | Total days spent: ${totalDays}`;
+}
 
-  function updateProgress() {
-    const completed = document.querySelectorAll(".week.completed").length;
-    document.getElementById("progressText").innerText = `${completed} / ${studyPlan.length} weeks completed`;
-  }
-
-  function calculateDates() {
-    const startDateInput = document.getElementById("startDate").value;
-    if (!startDateInput) return;
-
-    const startDate = new Date(startDateInput);
-    studyPlan.forEach((_, i) => {
-      const weekStart = new Date(startDate);
-      weekStart.setDate(startDate.getDate() + i * 7);
-      document.getElementById(`date-${i}`).innerText = `Week starts: ${weekStart.toDateString()}`;
-    });
-
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + studyPlan.length * 7);
-    document.getElementById("endDate").innerText = `Expected Completion Date: ${endDate.toDateString()}`;
-
-    const today = new Date();
-    const diffTime = endDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 0) {
-      document.getElementById("timeRemaining").innerText = `Days remaining: ${diffDays}`;
-    } else {
-      document.getElementById("timeRemaining").innerText = `Schedule completed or overdue`;
-    }
-  }
+render();
 </script>
 
 </body>
 </html>
-
