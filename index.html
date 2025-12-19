@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CMT Level I – Study Progress Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-container {
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar {
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: right;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .week {
+      max-width: 900px;
+      margin: 15px auto;
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .week h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .task input {
+      margin-right: 10px;
+    }
+
+    .task label {
+      cursor: pointer;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+<h1>CMT Level I – 16 Week Study Tracker (8 hrs/week)</h1>
+
+<div class="progress-container">
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-text" id="progressText">0% completed</div>
+</div>
+
+<div id="weeksContainer"></div>
+
+<footer>
+  Progress is saved automatically in your browser.
+</footer>
+
+<script>
+  const schedule = [
+    { week: "Week 1", tasks: [
+      "Introduction to Technical Analysis",
+      "History of Technical Analysis",
+      "Role of the Technical Analyst",
+      "Basic terminology practice"
+    ]},
+    { week: "Week 2", tasks: [
+      "Market mechanics (price, volume, open interest)",
+      "Dow Theory principles",
+      "Intermarket analysis basics",
+      "Practice questions"
+    ]},
+    { week: "Week 3", tasks: [
+      "Behavioral finance basics",
+      "Random walk theory",
+      "Efficient Market Hypothesis (EMH)",
+      "Weekly revision & quiz"
+    ]},
+    { week: "Week 4", tasks: [
+      "Line, bar, and candlestick charts",
+      "Timeframes & scaling",
+      "Chart-based practice questions"
+    ]},
+    { week: "Week 5", tasks: [
+      "Trend concepts",
+      "Support & resistance",
+      "Breakouts & confirmations",
+      "Practice questions"
+    ]},
+    { week: "Week 6", tasks: [
+      "Moving averages (SMA, EMA, WMA)",
+      "Trend-following logic",
+      "Revision & mixed questions"
+    ]},
+    { week: "Week 7", tasks: [
+      "Head & Shoulders patterns",
+      "Double/Triple tops & bottoms",
+      "Pattern psychology",
+      "Practice questions"
+    ]},
+    { week: "Week 8", tasks: [
+      "Triangles, flags, pennants",
+      "Gaps & price objectives",
+      "Practice questions"
+    ]},
+    { week: "Week 9", tasks: [
+      "RSI",
+      "Stochastic oscillator",
+      "Rate of Change",
+      "Practice questions"
+    ]},
+    { week: "Week 10", tasks: [
+      "MACD",
+      "Bollinger Bands",
+      "Indicator limitations",
+      "Revision & quiz"
+    ]},
+    { week: "Week 11", tasks: [
+      "Volume analysis",
+      "On-Balance Volume (OBV)",
+      "Accumulation/Distribution",
+      "Practice questions"
+    ]},
+    { week: "Week 12", tasks: [
+      "Market breadth indicators",
+      "Sentiment indicators",
+      "Volatility indicators (VIX)",
+      "Practice questions"
+    ]},
+    { week: "Week 13", tasks: [
+      "Cycle analysis basics",
+      "System testing concepts",
+      "Confirmation & non-confirmation",
+      "Weekly revision"
+    ]},
+    { week: "Week 14", tasks: [
+      "CMT ethics",
+      "CFA Code & Standards overview",
+      "Ethics practice questions"
+    ]},
+    { week: "Week 15", tasks: [
+      "Full syllabus revision",
+      "Formula & indicator review",
+      "Timed practice tests"
+    ]},
+    { week: "Week 16", tasks: [
+      "Mock exam 1",
+      "Mock exam 2",
+      "Error log review",
+      "Final light revision"
+    ]}
+  ];
+
+  const container = document.getElementById("weeksContainer");
+
+  function loadProgress() {
+    return JSON.parse(localStorage.getItem("cmtProgress")) || {};
+  }
+
+  function saveProgress(progress) {
+    localStorage.setItem("cmtProgress", JSON.stringify(progress));
+  }
+
+  function updateProgress() {
+    const checkboxes = document.querySelectorAll("input[type='checkbox']");
+    const completed = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const total = checkboxes.length;
+    const percentage = Math.round((completed / total) * 100);
+
+    document.getElementById("progressFill").style.width = percentage + "%";
+    document.getElementById("progressText").textContent = percentage + "% completed";
+  }
+
+  function render() {
+    const progress = loadProgress();
+
+    schedule.forEach((weekData, wIndex) => {
+      const weekDiv = document.createElement("div");
+      weekDiv.className = "week";
+
+      const title = document.createElement("h2");
+      title.textContent = weekData.week;
+      weekDiv.appendChild(title);
+
+      weekData.tasks.forEach((task, tIndex) => {
+        const taskId = `w${wIndex}_t${tIndex}`;
+
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = taskId;
+        checkbox.checked = progress[taskId] || false;
+
+        checkbox.addEventListener("change", () => {
+          progress[taskId] = checkbox.checked;
+          saveProgress(progress);
+          updateProgress();
+        });
+
+        const label = document.createElement("label");
+        label.htmlFor = taskId;
+        label.textContent = task;
+
+        taskDiv.appendChild(checkbox);
+        taskDiv.appendChild(label);
+        weekDiv.appendChild(taskDiv);
+      });
+
+      container.appendChild(weekDiv);
+    });
+
+    updateProgress();
+  }
+
+  render();
+</script>
+
+</body>
+</html>
